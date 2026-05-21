@@ -1,18 +1,19 @@
 // src/services/whatsapp.service.js
-import baileys from '@whiskeysockets/baileys';
+import { createRequire } from 'module';
 import { existsSync, mkdirSync } from 'fs';
 import { config }  from '../config/env.js';
 import { logger }  from '../config/logger.js';
 
-// Baileys puede exportar bajo .default (ESM) o directamente (CJS)
-const baileysModule = baileys.default ?? baileys;
+// Baileys es CJS — usar createRequire para importarlo correctamente desde ESM
+const require = createRequire(import.meta.url);
 const {
-  default: makeWASocket,
+  default:                   makeWASocket,
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
   DisconnectReason,
   makeCacheableSignalKeyStore,
-} = baileysModule;
+} = require('@whiskeysockets/baileys');
+
 
 // ─── Estado interno ────────────────────────────────────────────────────────────
 let sock         = null;
