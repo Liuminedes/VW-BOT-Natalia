@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VW Bot — Admin Panel</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e8e8e8; min-height: 100vh; }
+.header { background: #1a1a2e; border-bottom: 1px solid #2d2d4e; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.header-left { display: flex; align-items: center; gap: 12px; }
+.vw-logo { width: 36px; height: 36px; background: #1565c0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; }
+.header h1 { font-size: 16px; font-weight: 500; }
+.header p { font-size: 12px; color: #888; margin-top: 2px; }
+.status-badge { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 14px; border-radius: 20px; }
+.status-badge.connected { background: #1a2e1a; border: 1px solid #2d4e2d; color: #4caf50; }
+.status-badge.disconnected { background: #2e1a1a; border: 1px solid #4e2d2d; color: #ef5350; }
+.status-badge.qr { background: #2e2a1a; border: 1px solid #4e3d2d; color: #ffa726; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+.container { max-width: 900px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:640px) { .grid-2 { grid-template-columns: 1fr; } }
+.card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px; }
+.card-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #555; margin-bottom: 16px; }
+.qr-wrapper { background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; min-height: 240px; justify-content: center; }
+#qr-img { width: 180px; height: 180px; display: none; }
+#qr-placeholder { text-align: center; color: #555; font-size: 13px; }
+.qr-hint { font-size: 12px; color: #666; text-align: center; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #222; }
+.toggle-row:last-of-type { border-bottom: none; }
+.toggle-label { font-size: 14px; color: #ccc; }
+.toggle-sub { font-size: 12px; color: #666; margin-top: 2px; }
+.toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.tslider { position: absolute; inset: 0; background: #333; border-radius: 24px; cursor: pointer; transition: .2s; }
+.tslider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #666; border-radius: 50%; transition: .2s; }
+.toggle input:checked + .tslider { background: #1565c0; }
+.toggle input:checked + .tslider:before { transform: translateX(20px); background: white; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: #1565c0; color: white; }
+.btn-primary:hover:not(:disabled) { background: #1976d2; }
+.btn-danger { background: #c62828; color: white; }
+.btn-danger:hover:not(:disabled) { background: #d32f2f; }
+.btn-secondary { background: #2a2a2a; color: #ccc; border: 1px solid #3a3a3a; }
+.btn-secondary:hover:not(:disabled) { background: #333; }
+.btn-success { background: #1b5e20; color: #81c784; border: 1px solid #2e7d32; }
+.btn-success:hover:not(:disabled) { background: #2e7d32; color: #a5d6a7; }
+.catalog-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+.cat-stat { background: #111; border-radius: 8px; padding: 12px; text-align: center; }
+.cat-stat .num { font-size: 22px; font-weight: 500; color: #e0e0e0; }
+.cat-stat .lbl { font-size: 11px; color: #666; margin-top: 3px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #555; border-bottom: 1px solid #222; font-weight: 500; }
+td { padding: 10px 10px; border-bottom: 1px solid #1a1a1a; vertical-align: middle; }
+tr:hover td { background: #1e1e1e; }
+.badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 500; white-space: nowrap; }
+.badge-green { background: #1b5e20; color: #81c784; }
+.badge-amber { background: #e65100; color: #ffb74d; }
+.badge-purple { background: #4a148c; color: #ce93d8; }
+.badge-gray { background: #2a2a2a; color: #888; }
+.act-btn { padding: 4px 9px; font-size: 11px; border-radius: 5px; border: none; cursor: pointer; font-weight: 500; }
+.act-green { background: #1b5e20; color: #81c784; }
+.act-amber { background: #bf360c; color: #ffcc80; }
+.act-gray { background: #252525; color: #888; border: 1px solid #333; }
+.act-red { background: #252525; color: #ef5350; border: 1px solid #333; }
+.excl-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.excl-row input { flex: 1; background: #111; border: 1px solid #333; border-radius: 8px; padding: 8px 12px; color: #e0e0e0; font-size: 13px; }
+.excl-row input:focus { outline: none; border-color: #1565c0; }
+.excl-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #111; border-radius: 6px; margin-bottom: 6px; font-size: 13px; color: #ccc; }
+.no-items { color: #555; font-size: 13px; padding: 8px 0; }
+.flash { animation: flashbg .6s ease; }
+@keyframes flashbg { 0%{background:#1b5e20}100%{background:transparent} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="vw-logo">VW</div>
+    <div>
+      <h1>VW Bot — Admin Panel</h1>
+      <p id="advisor-name">Natalia Escobar · Motorwagen Cali</p>
+    </div>
+  </div>
+  <div class="status-badge disconnected" id="status-badge">
+    <div class="status-dot"></div>
+    <span id="status-text">Cargando...</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="grid-2">
+    <!-- QR -->
+    <div class="card">
+      <div class="card-title">Código QR</div>
+      <div class="qr-wrapper">
+        <img id="qr-img" alt="QR WhatsApp"/>
+        <div id="qr-placeholder">
+          <div style="font-size:32px;margin-bottom:8px;">📱</div>
+          <div>Generando QR...</div>
+        </div>
+        <div class="qr-hint" id="qr-hint" style="display:none">
+          Abre WhatsApp → Configuración<br>→ Dispositivos vinculados → Vincular
+        </div>
+      </div>
+    </div>
+
+    <!-- Control -->
+    <div class="card">
+      <div class="card-title">Control del bot</div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Bot activo globalmente</div>
+          <div class="toggle-sub">Pausa el bot para todos los clientes</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="global-toggle" checked onchange="toggleGlobal(this.checked)">
+          <span class="tslider"></span>
+        </label>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="loadStatus()">Actualizar estado</button>
+        <button class="btn btn-danger" onclick="forceRelogin()">Forzar relogin</button>
+      </div>
+
+      <div style="margin-top:20px;">
+        <div class="card-title">Catálogo desde Supabase</div>
+        <div class="catalog-grid">
+          <div class="cat-stat"><div class="num" id="cat-count">—</div><div class="lbl">vehículos</div></div>
+          <div class="cat-stat"><div class="num" id="cat-age">—</div><div class="lbl">min. desde sync</div></div>
+          <div class="cat-stat"><div class="num">6h</div><div class="lbl">TTL cache</div></div>
+        </div>
+        <button class="btn btn-success" id="refresh-btn" onclick="refreshCatalog()">Refrescar catálogo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sesiones -->
+  <div class="card">
+    <div class="card-title">Sesiones de clientes</div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Step</th>
+            <th>Estado</th>
+            <th>Últ.</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="sessions-body">
+          <tr><td colspan="5" style="color:#555;padding:20px;text-align:center;">Cargando sesiones...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px;" onclick="loadSessions()">Actualizar lista</button>
+    </div>
+  </div>
+
+  <!-- Excluidos -->
+  <div class="card">
+    <div class="card-title">Números excluidos</div>
+    <div class="excl-row">
+      <input type="text" id="excl-input" placeholder="Ej: 3001234567" onkeydown="if(event.key==='Enter')addExcluded()"/>
+      <button class="btn btn-primary" onclick="addExcluded()">Agregar</button>
+    </div>
+    <div id="excl-list"><div class="no-items">No hay números excluidos</div></div>
+  </div>
+
+</div>
+
+<script>
+const TOKEN = new URLSearchParams(location.search).get('token') || '';
+const BASE   = '';
+
+async function api(path, opts={}) {
+  const res = await fetch(`${BASE}/admin/api/${path}`, {
+    headers: { 'x-admin-token': TOKEN, 'content-type': 'application/json' },
+    ...opts
+  });
+  return res.json();
+}
+
+async function loadStatus() {
+  try {
+    const d = await api('status');
+    const badge = document.getElementById('status-badge');
+    const text  = document.getElementById('status-text');
+    const qrImg = document.getElementById('qr-img');
+    const qrPh  = document.getElementById('qr-placeholder');
+    const qrHint = document.getElementById('qr-hint');
+
+    if (d.connected) {
+      badge.className = 'status-badge connected';
+      text.textContent = 'WhatsApp conectado';
+      qrImg.style.display = 'none';
+      qrPh.innerHTML = '<div style="font-size:32px;margin-bottom:8px;">✅</div><div style="color:#4caf50;">Conectado y listo</div>';
+      qrHint.style.display = 'none';
+    } else if (d.hasQR) {
+      badge.className = 'status-badge qr';
+      text.textContent = 'Esperando escaneo';
+      loadQR();
+    } else {
+      badge.className = 'status-badge disconnected';
+      text.textContent = 'Desconectado';
+      qrImg.style.display = 'none';
+      qrPh.innerHTML = '<div style="font-size:32px;margin-bottom:8px;">❌</div><div>Sin conexión</div>';
+    }
+
+    document.getElementById('global-toggle').checked = !d.globalPause;
+
+    if (d.catalog) {
+      document.getElementById('cat-count').textContent = d.catalog.count || '—';
+      document.getElementById('cat-age').textContent   = d.catalog.ageMinutes ?? '—';
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function loadQR() {
+  try {
+    const d = await api('qr');
+    const qrImg = document.getElementById('qr-img');
+    const qrPh  = document.getElementById('qr-placeholder');
+    const qrHint = document.getElementById('qr-hint');
+    if (d.qr) {
+      qrImg.src = d.qr;
+      qrImg.style.display = 'block';
+      qrPh.style.display = 'none';
+      qrHint.style.display = 'block';
+    }
+  } catch(e) {}
+}
+
+async function toggleGlobal(active) {
+  await api('pause-global', { method: 'POST', body: JSON.stringify({ paused: !active }) });
+}
+
+async function forceRelogin() {
+  if (!confirm('¿Forzar relogin? Se generará un nuevo QR y deberás escanear nuevamente.')) return;
+  await api('relogin', { method: 'POST' });
+  setTimeout(loadStatus, 3000);
+}
+
+async function refreshCatalog() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.textContent = 'Consultando Supabase...';
+  try {
+    await api('catalog/refresh', { method: 'POST' });
+    btn.textContent = '✓ Catálogo actualizado';
+    setTimeout(() => { btn.textContent = 'Refrescar catálogo'; btn.disabled = false; }, 3000);
+    loadStatus();
+  } catch(e) {
+    btn.textContent = 'Error al refrescar';
+    btn.disabled = false;
+  }
+}
+
+function timeAgo(ts) {
+  if (!ts) return '—';
+  const m = Math.floor((Date.now() - ts) / 60000);
+  if (m < 1) return '0m';
+  if (m < 60) return m + 'm';
+  return Math.floor(m/60) + 'h';
+}
+
+function stepBadge(step) {
+  const map = {
+    WELCOME: 'WELCOME', MENU: 'MENU',
+    CATALOG_CATEGORY: 'CATÁLOGO', CATALOG_LIST: 'CATÁLOGO',
+    VEHICLE_DETAIL: 'VEHÍCULO', CAPTURE_INTEREST: 'INTERÉS',
+    CAPTURE_BUDGET: 'PRESUPUESTO', CAPTURE_EMPLOYMENT: 'EMPLEO',
+    CAPTURE_INCOME: 'INGRESOS', CREDIT_CHECK: 'CENTRALES',
+    ASK_LEAD_NAME: 'NOMBRE', ASK_LEAD_PHONE: 'TELÉFONO',
+    FINANCING_OPTIONS: 'FINANCIACIÓN', DONE: 'COMPLETADO',
+  };
+  return map[step] || step;
+}
+
+function stateBadge(s) {
+  if (s.handoffMode)  return '<span class="badge badge-purple">Lead entregado</span>';
+  if (s.advisorTook)  return '<span class="badge badge-amber">Natalia atiende</span>';
+  return '<span class="badge badge-green">Bot activo</span>';
+}
+
+async function loadSessions() {
+  const tbody = document.getElementById('sessions-body');
+  try {
+    const sessions = await api('sessions');
+    if (!sessions.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="color:#555;padding:20px;text-align:center;">Sin sesiones activas</td></tr>';
+      return;
+    }
+    tbody.innerHTML = sessions.map(s => {
+      const canResume = s.advisorTook || s.handoffMode;
+      const uid = encodeURIComponent(s.userId);
+      return `<tr>
+        <td style="color:#e0e0e0;font-weight:500;">${s.pushName || s.lead?.name || '—'}</td>
+        <td style="color:#999;">${stepBadge(s.step)}</td>
+        <td>${stateBadge(s)}</td>
+        <td style="color:#666;">${timeAgo(s.updatedAt)}</td>
+        <td style="display:flex;gap:5px;flex-wrap:wrap;">
+          ${canResume
+            ? `<button class="act-btn act-green" onclick="resumeSession('${uid}')">Reactivar</button>`
+            : `<button class="act-btn act-amber" onclick="pauseSession('${uid}')">Pausar</button>`}
+          <button class="act-btn act-gray" onclick="resetSession('${uid}')">Reset</button>
+          <button class="act-btn act-red" onclick="excludeFromSession('${s.userId}')">Excluir</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="5" style="color:#ef5350;padding:20px;text-align:center;">Error al cargar sesiones</td></tr>';
+  }
+}
+
+async function resumeSession(uid) {
+  await api(`sessions/${uid}/resume`, { method: 'POST' });
+  loadSessions();
+}
+async function pauseSession(uid) {
+  await api(`sessions/${uid}/pause`, { method: 'POST' });
+  loadSessions();
+}
+async function resetSession(uid) {
+  if (!confirm('¿Reiniciar esta sesión? Se perderán los datos del flujo.')) return;
+  await api(`sessions/${uid}/reset`, { method: 'POST' });
+  loadSessions();
+}
+function excludeFromSession(userId) {
+  const phone = userId.replace(/[@:][^\s]*/g, '').replace(/\D/g,'');
+  document.getElementById('excl-input').value = phone;
+  addExcluded();
+}
+
+async function loadExcluded() {
+  try {
+    const list = await api('excluded');
+    renderExcluded(list);
+  } catch(e) {}
+}
+
+function renderExcluded(list) {
+  const el = document.getElementById('excl-list');
+  if (!list.length) { el.innerHTML = '<div class="no-items">No hay números excluidos</div>'; return; }
+  el.innerHTML = list.map(p => `
+    <div class="excl-item">
+      <span>${p}</span>
+      <button class="act-btn act-red" onclick="removeExcluded('${p}')">Quitar</button>
+    </div>`).join('');
+}
+
+async function addExcluded() {
+  const inp = document.getElementById('excl-input');
+  const phone = inp.value.trim().replace(/\D/g,'');
+  if (!phone) return;
+  await api('excluded', { method: 'POST', body: JSON.stringify({ phone }) });
+  inp.value = '';
+  loadExcluded();
+}
+
+async function removeExcluded(phone) {
+  await api(`excluded/${phone}`, { method: 'DELETE' });
+  loadExcluded();
+}
+
+function init() {
+  loadStatus();
+  loadSessions();
+  loadExcluded();
+  setInterval(loadStatus,   15000);
+  setInterval(loadSessions, 30000);
+}
+
+init();
+</script>
+</body>
+</html>
