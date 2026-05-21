@@ -162,6 +162,14 @@ export async function initWhatsApp(onMessage, onAdvisorMessage) {
 async function handleIncomingMessage(msg, onMessage, onAdvisorMessage) {
   if (!msg.message) return;
 
+  // Ignorar mensajes con más de 90 segundos de antigüedad (evita procesamiento de cola acumulada)
+  const msgTs = (msg.messageTimestamp || 0) * 1000;
+  const age   = Date.now() - msgTs;
+  if (msgTs > 0 && age > 90_000) {
+    logger.info(`[WA] ⏭ Mensaje ignorado por antigüedad (${Math.round(age/1000)}s): "${(msg.message?.conversation || '').substring(0,30)}"`);
+    return;
+  }
+
   const jid = msg.key.remoteJid || '';
 
   // Filtros: grupos, newsletters, canales, broadcasts, status
