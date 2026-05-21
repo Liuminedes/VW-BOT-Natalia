@@ -76,7 +76,15 @@ export async function initWhatsApp(onMessage, onAdvisorMessage) {
       auth: {
         creds: state.creds,
         keys:  makeCacheableSignalKeyStore(state.keys, {
-          level: 'silent', child: () => ({ level: 'silent' })
+          level: 'silent',
+          trace: () => {}, debug: () => {}, info:  () => {},
+          warn:  () => {}, error: () => {}, fatal: () => {},
+          child: () => ({
+            level: 'silent',
+            trace: () => {}, debug: () => {}, info:  () => {},
+            warn:  () => {}, error: () => {}, fatal: () => {},
+            child: () => ({}),
+          }),
         }),
       },
       printQRInTerminal:    false,
