@@ -4,13 +4,15 @@ import { existsSync, mkdirSync } from 'fs';
 import { config }  from '../config/env.js';
 import { logger }  from '../config/logger.js';
 
+// Baileys puede exportar bajo .default (ESM) o directamente (CJS)
+const baileysModule = baileys.default ?? baileys;
 const {
   default: makeWASocket,
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
   DisconnectReason,
   makeCacheableSignalKeyStore,
-} = baileys.default ?? baileys;
+} = baileysModule;
 
 // ─── Estado interno ────────────────────────────────────────────────────────────
 let sock         = null;
