@@ -10,7 +10,7 @@ const {
   fetchLatestBaileysVersion,
   DisconnectReason,
   makeCacheableSignalKeyStore,
-} = baileys;
+} = baileys.default ?? baileys;
 
 // ─── Estado interno ────────────────────────────────────────────────────────────
 let sock         = null;
