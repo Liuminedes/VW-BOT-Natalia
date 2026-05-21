@@ -345,9 +345,17 @@ export async function handleMessage({ userId, text, pushName }) {
     case STEPS.ASK_LEAD_PHONE:    return handleAskLeadPhone(userId, session, input);
     case STEPS.FINANCING_OPTIONS: return handleFinancingOptions(userId, session, input);
     case STEPS.DONE:
-      session.step = STEPS.MENU;
-      await SessionService.save(session);
-      return send(userId, MSG.menu());
+      // El cliente escribe después del handoff — solo responder si escribe menu/hola
+      if (RESET_KEYWORDS.includes(input)) {
+        session.step        = STEPS.WELCOME;
+        session.advisorTook = false;
+        session.handoffMode = false;
+        await SessionService.save(session);
+        return handleWelcome(userId, session, pushName);
+      }
+      // Cualquier otro mensaje después del handoff → silencio (Natalia está atendiendo)
+      logger.info(`[Flow] ⏸ Post-handoff silencioso para ${userId}`);
+      return;
     default:
       return handleWelcome(userId, session, pushName);
   }
