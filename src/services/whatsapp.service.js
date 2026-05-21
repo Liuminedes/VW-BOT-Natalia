@@ -82,7 +82,25 @@ export async function initWhatsApp(onMessage, onAdvisorMessage) {
       printQRInTerminal:    false,
       syncFullHistory:      false,
       markOnlineOnConnect:  false,
-      logger: { level: 'silent', child: () => ({ level: 'silent' }) },
+      logger: {
+        level:  'silent',
+        trace:  () => {},
+        debug:  () => {},
+        info:   () => {},
+        warn:   () => {},
+        error:  () => {},
+        fatal:  () => {},
+        child:  () => ({
+          level:  'silent',
+          trace:  () => {},
+          debug:  () => {},
+          info:   () => {},
+          warn:   () => {},
+          error:  () => {},
+          fatal:  () => {},
+          child:  () => ({}),
+        }),
+      },
     });
 
     // ── QR ───────────────────────────────────────────────────────────────────
