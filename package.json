@@ -1,0 +1,28 @@
+{
+  "name": "vw-bot-natalia",
+  "version": "1.0.0",
+  "description": "VW Bot Natalia Escobar — Motorwagen Cali · Vyntra Orbit",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "engines": { "node": ">=20.0.0" },
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^6.7.18",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ioredis": "^5.4.1",
+    "node-fetch": "^3.3.2",
+    "pino": "^9.3.2",
+    "qrcode": "^1.5.3",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "author": "Vyntra Orbit",
+  "license": "MIT"
+}
